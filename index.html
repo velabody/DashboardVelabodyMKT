@@ -111,10 +111,10 @@ tr:hover td { background: #1e1e30; }
 
 <div class="config-bar">
   <div class="config-inner">
-    <label>Fuente de datos: Pipeline VB USA - Ventas (Google Sheets)</label>
+    <label>Fuente: Pipeline VB USA - Ventas · Google Sheets</label>
     <button onclick="loadSheet()">↺ Actualizar datos</button>
   </div>
-  <div class="config-note">Los datos se cargan automáticamente desde tu Google Sheet pública · Se actualiza diariamente con el script de Kommo</div>
+  <div class="config-note">Los datos se cargan automáticamente · Se actualizan diariamente con el script de Kommo</div>
 </div>
 
 <div class="filters">
@@ -149,8 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function loadSheet() {
-  // ID hardcodeado directamente — no depende del campo de texto
-  const sheetId = '2PACX-1vSkwRc2nROP76k1AHgfjZnbYXLToMZDOrM2R8PYYYa4PgeN8n1ol0uGmQ2Nr2H9kNVAijskqbOnKI37';
+  const sheetId = '1fd-DpQ7taBhv3dtt9TrFRRdOHAaI0LNT_B3JIq8ywlc';
   const gid     = '1930317191';
 
   setStatus('loading', 'Cargando...');
