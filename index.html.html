@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VELABODY USA — Dashboard Live</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #e8e6f0; min-height: 100vh; }
+.header { background: #1a1a2e; border-bottom: 1px solid #2d2d4e; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.header-logo { font-size: 14px; font-weight: 600; color: #c4b5fd; letter-spacing: .03em; }
+.header-sub { font-size: 11px; color: #6b6b8a; margin-top: 2px; }
+.header-status { font-size: 11px; color: #6b6b8a; display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4a4a6a; }
+.status-dot.ok { background: #1D9E75; }
+.status-dot.loading { background: #BA7517; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.config-bar { background: #13131f; border-bottom: 1px solid #2d2d4e; padding: 10px 24px; }
+.config-inner { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.config-bar label { font-size: 11px; color: #6b6b8a; }
+.config-bar input[type=text] { background: #1e1e30; border: 1px solid #2d2d4e; color: #c4b5fd; font-size: 11px; padding: 5px 10px; border-radius: 5px; width: 420px; outline: none; font-family: monospace; }
+.config-bar input[type=text]:focus { border-color: #7F77DD; }
+.config-bar button { background: #534AB7; border: none; color: #fff; font-size: 11px; padding: 5px 14px; border-radius: 5px; cursor: pointer; }
+.config-bar button:hover { background: #7F77DD; }
+.config-note { font-size: 10px; color: #4a4a6a; margin-top: 6px; }
+
+.filters { background: #13131f; border-bottom: 1px solid #2d2d4e; padding: 8px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.filters label { font-size: 11px; color: #6b6b8a; text-transform: uppercase; letter-spacing: .05em; }
+.filters select { background: #1e1e30; border: 1px solid #2d2d4e; color: #e8e6f0; font-size: 11px; padding: 4px 8px; border-radius: 5px; outline: none; cursor: pointer; }
+
+.main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+.loading-msg { text-align: center; padding: 60px 0; color: #4a4a6a; font-size: 14px; }
+
+.manual-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+.manual-card { background: #1a1a2e; border: 1px solid #2d2d4e; border-top: 2px solid #534AB7; border-radius: 8px; padding: 12px 14px; }
+.manual-label { font-size: 10px; color: #6b6b8a; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.manual-input-wrap { display: flex; align-items: center; gap: 5px; }
+.manual-input-wrap span { font-size: 13px; color: #534AB7; font-weight: 600; }
+.manual-input { background: #0f0f1a; border: 1px solid #2d2d4e; color: #c4b5fd; font-size: 16px; font-weight: 600; padding: 4px 8px; border-radius: 5px; width: 100%; outline: none; }
+.manual-input:focus { border-color: #7F77DD; }
+
+.section-label { font-size: 10px; color: #4a4a6a; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+.cards-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 10px; }
+.cards-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 20px; }
+.scard { background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 8px; padding: 13px 14px; }
+.scard.hl  { border-left: 3px solid #7F77DD; }
+.scard.hlg { border-left: 3px solid #1D9E75; }
+.scard.hla { border-left: 3px solid #BA7517; }
+.scard-label { font-size: 10px; color: #6b6b8a; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.scard-val { font-size: 24px; font-weight: 600; color: #e8e6f0; line-height: 1; }
+.scard-val.sm { font-size: 18px; }
+.scard-sub { font-size: 10px; color: #534AB7; margin-top: 5px; }
+
+.funnel-row { display: flex; align-items: center; gap: 0; margin-bottom: 20px; flex-wrap: wrap; }
+.funnel-step { flex: 1; min-width: 80px; background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 8px; padding: 12px 10px; text-align: center; margin: 4px; }
+.funnel-step-num { font-size: 20px; font-weight: 600; }
+.funnel-step-label { font-size: 9px; color: #6b6b8a; text-transform: uppercase; letter-spacing: .05em; margin-top: 3px; }
+.funnel-arrow { padding: 0 4px; text-align: center; min-width: 50px; }
+.funnel-rate { font-size: 16px; font-weight: 600; }
+.funnel-rate-label { font-size: 9px; color: #6b6b8a; margin-top: 2px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.section { background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 8px; padding: 14px; }
+.section-title { font-size: 10px; color: #6b6b8a; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #2d2d4e; }
+
+table { width: 100%; border-collapse: collapse; font-size: 11px; }
+th { text-align: left; font-weight: 500; font-size: 9px; color: #4a4a6a; text-transform: uppercase; letter-spacing: .05em; padding: 4px 7px; border-bottom: 1px solid #2d2d4e; }
+td { padding: 6px 7px; border-bottom: 1px solid #1e1e30; color: #c8c6d8; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #1e1e30; }
+
+.badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 20px; }
+.badge.green { background: #0a2e1a; color: #4ade80; }
+.badge.amber { background: #2e1e0a; color: #fbbf24; }
+.badge.red   { background: #2e0a0a; color: #f87171; }
+
+.bar-wrap { display: flex; align-items: center; gap: 5px; }
+.bar-bg   { flex: 1; height: 5px; background: #2d2d4e; border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; }
+
+.pip-item { margin-bottom: 7px; }
+.pip-label { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px; }
+.pip-bar-bg   { height: 6px; border-radius: 3px; background: #2d2d4e; }
+.pip-bar-fill { height: 100%; border-radius: 3px; }
+
+.legend { display: flex; gap: 12px; margin-bottom: 8px; font-size: 10px; color: #6b6b8a; flex-wrap: wrap; }
+.ldot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 3px; vertical-align: middle; }
+.empty-msg { font-size: 12px; color: #4a4a6a; text-align: center; padding: 18px 0; font-style: italic; }
+
+@media (max-width: 800px) {
+  .cards-5,.cards-4 { grid-template-columns: repeat(2,1fr); }
+  .manual-row,.grid-2 { grid-template-columns: 1fr; }
+  .config-bar input[type=text] { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">VELABODY USA — Dashboard de Adquisición</div>
+    <div class="header-sub" id="hdr-sub">Pipeline VB USA - Ventas</div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-txt">Sin conectar</span>
+  </div>
+</div>
+
+<div class="config-bar">
+  <div class="config-inner">
+    <label>ID de tu Google Sheet:</label>
+    <input type="text" id="sheet-url" placeholder="Pegá acá solo el ID de tu sheet (la parte larga entre /d/ y /pub)">
+    <button onclick="loadSheet()">Cargar datos</button>
+  </div>
+  <div class="config-note">
+    Tu URL es: https://docs.google.com/spreadsheets/d/e/<strong>ESTE_ES_EL_ID</strong>/pub?gid=...
+    &nbsp;·&nbsp; El ID ya está precargado con el de VELABODY — solo hacé clic en "Cargar datos"
+  </div>
+</div>
+
+<div class="filters">
+  <label>Período</label>
+  <select id="sel-period">
+    <option value="all">Todo el tiempo</option>
+    <option value="30">Últimos 30 días</option>
+    <option value="90">Últimos 90 días</option>
+    <option value="180">Últimos 6 meses</option>
+    <option value="365">Último año</option>
+  </select>
+  <label>Canal</label>
+  <select id="sel-canal"><option value="all">Todos</option></select>
+  <label>Vendedor</label>
+  <select id="sel-vendedor"><option value="all">Todos</option></select>
+</div>
+
+<div class="main">
+  <div class="loading-msg" id="loading-msg">
+    Ingresá la URL de tu Google Sheet y hacé clic en "Cargar datos"
+  </div>
+  <div id="dashboard" style="display:none"></div>
+</div>
+
+<script>
+let RAW = [];
+let chartMes = null;
+
+// ID precargado de VELABODY — el usuario puede cambiarlo
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('sheet-url').value = '2PACX-1vSkwRc2nROP76k1AHgfjZnbYXLToMZDOrM2R8PYYYa4PgeN8n1ol0uGmQ2Nr2H9kNVAijskqbOnKI37';
+});
+
+function loadSheet() {
+  const sheetId = document.getElementById('sheet-url').value.trim();
+  if (!sheetId) return;
+
+  setStatus('loading', 'Cargando...');
+  document.getElementById('loading-msg').textContent = 'Cargando datos desde Google Sheets...';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loading-msg').style.display = 'block';
+
+  // Usar Google Visualization Query API con JSONP — bypasea CORS
+  const gid = '1930317191';
+  const callbackName = 'handleSheetData_' + Date.now();
+  const url = `https://docs.google.com/spreadsheets/d/e/${sheetId}/pub?gid=${gid}&single=true&output=csv`;
+
+  // Usar un iframe oculto + objeto XMLHttpRequest con modo no-cors no funciona
+  // La solución correcta: Google Sheets gviz API con JSONP
+  const gvizUrl = `https://docs.google.com/spreadsheets/d/e/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}&callback=${callbackName}`;
+
+  window[callbackName] = function(data) {
+    try {
+      delete window[callbackName];
+      document.getElementById('jsonp-script').remove();
+
+      const cols = data.table.cols.map(c => c.label);
+      RAW = data.table.rows.map(row => {
+        const obj = {};
+        cols.forEach((col, i) => {
+          const cell = row.c[i];
+          obj[col] = cell && cell.v !== null && cell.v !== undefined ? String(cell.v) : '';
+        });
+        return obj;
+      }).filter(r => r.Etapa && r.Etapa.trim() !== '');
+
+      if (RAW.length === 0) throw new Error('No se encontraron filas con datos');
+
+      populateFilter('sel-canal',    [...new Set(RAW.map(r=>r.Canal).filter(Boolean))].sort());
+      populateFilter('sel-vendedor', [...new Set(RAW.map(r=>r.Vendedor).filter(Boolean))].sort());
+
+      setStatus('ok', `${RAW.length.toLocaleString()} leads cargados`);
+      document.getElementById('hdr-sub').textContent = `Pipeline VB USA - Ventas · ${RAW.length.toLocaleString()} leads`;
+      document.getElementById('loading-msg').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      render();
+
+    } catch(e) {
+      setStatus('error', 'Error al procesar');
+      document.getElementById('loading-msg').textContent = '❌ Error al procesar los datos: ' + e.message;
+    }
+  };
+
+  // Inyectar script JSONP
+  const script = document.createElement('script');
+  script.id = 'jsonp-script';
+  script.src = gvizUrl;
+  script.onerror = () => {
+    setStatus('error', 'Error al cargar');
+    document.getElementById('loading-msg').textContent = '❌ No se pudo conectar con Google Sheets. Verificá que la pestaña Dashboard_Data esté publicada como "Publicar en la web".';
+  };
+  document.head.appendChild(script);
+}
+
+function populateFilter(id, values) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  while (sel.options.length > 1) sel.remove(1);
+  values.forEach(v => { const o = document.createElement('option'); o.value = o.textContent = v; sel.appendChild(o); });
+  sel.value = cur || 'all';
+}
+
+function setStatus(state, txt) {
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot' + (state==='ok'?' ok':state==='loading'?' loading':'');
+  document.getElementById('status-txt').textContent = txt;
+}
+
+function getFiltered() {
+  const period = document.getElementById('sel-period').value;
+  const canal  = document.getElementById('sel-canal').value;
+  const vend   = document.getElementById('sel-vendedor').value;
+  const now    = new Date();
+  return RAW.filter(r => {
+    if (canal !== 'all' && r.Canal !== canal) return false;
+    if (vend  !== 'all' && r.Vendedor !== vend) return false;
+    if (period !== 'all' && r.Fecha) {
+      const parts = r.Fecha.split('/');
+      if (parts.length === 3) {
+        const d = new Date(parts[2], parts[1]-1, parts[0]);
+        if ((now - d) / 86400000 > parseInt(period)) return false;
+      }
+    }
+    return true;
+  });
+}
+
+function getFinancial() {
+  return {
+    revenue: parseFloat(document.getElementById('inp-revenue').value)||0,
+    adspend: parseFloat(document.getElementById('inp-adspend').value)||0,
+  };
+}
+
+function fmt(n)    { return Math.round(n).toLocaleString('es-AR'); }
+function fmtUSD(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+function fmtPct(n) { return Math.round(n*100) + '%'; }
+function badgeC(r) { return r>=0.25?'green':r>=0.10?'amber':'red'; }
+function rateColor(r, hi, lo) { return r>=hi?'#4ade80':r>=lo?'#fbbf24':'#f87171'; }
+
+function render() {
+  const data = getFiltered();
+  const fin  = getFinancial();
+  const total   = data.length;
+  const calif   = data.filter(r=>r.Es_Calificado==='1').length;
+  const ventas  = data.filter(r=>r.Es_Venta==='1').length;
+  const perdidos= data.filter(r=>r.Es_Perdido==='1').length;
+
+  const tcLV = total>0 ? ventas/total : 0;
+  const tcCV = calif>0 ? ventas/calif : 0;
+  const tcLC = total>0 ? calif/total  : 0;
+
+  const cpl  = fin.adspend>0&&total>0  ? fin.adspend/total  : 0;
+  const cac  = fin.adspend>0&&ventas>0 ? fin.adspend/ventas : 0;
+  const rpl  = fin.revenue>0&&total>0  ? fin.revenue/total  : 0;
+  const roas = fin.adspend>0           ? fin.revenue/fin.adspend : 0;
+
+  document.getElementById('dashboard').innerHTML = `
+
+    <div class="section-label">Parámetros financieros — editar manualmente</div>
+    <div class="manual-row" style="margin-bottom:20px">
+      <div class="manual-card"><div class="manual-label">Revenue total (USD)</div><div class="manual-input-wrap"><span>$</span><input class="manual-input" id="inp-revenue" type="number" value="${fin.revenue||0}" min="0"></div></div>
+      <div class="manual-card"><div class="manual-label">Gasto en ads (USD)</div><div class="manual-input-wrap"><span>$</span><input class="manual-input" id="inp-adspend" type="number" value="${fin.adspend||0}" min="0"></div></div>
+      <div class="manual-card"><div class="manual-label">Ticket promedio (USD)</div><div class="manual-input-wrap"><span>$</span><input class="manual-input" id="inp-ticket" type="number" value="4250" min="0"></div></div>
+    </div>
+
+    <div class="section-label">Volumen de pipeline</div>
+    <div class="cards-5" style="margin-bottom:10px">
+      <div class="scard hl"><div class="scard-label">Total leads</div><div class="scard-val">${fmt(total)}</div><div class="scard-sub">en el período</div></div>
+      <div class="scard hl"><div class="scard-label">Calificados</div><div class="scard-val">${fmt(calif)}</div><div class="scard-sub">${fmtPct(tcLC)} del total</div></div>
+      <div class="scard hlg"><div class="scard-label">Ventas</div><div class="scard-val">${fmt(ventas)}</div><div class="scard-sub">close - won</div></div>
+      <div class="scard hla"><div class="scard-label">Perdidos</div><div class="scard-val">${fmt(perdidos)}</div><div class="scard-sub">${total>0?fmtPct(perdidos/total):'-'} del total</div></div>
+      <div class="scard"><div class="scard-label">En pipeline</div><div class="scard-val">${fmt(total-ventas-perdidos)}</div><div class="scard-sub">activos</div></div>
+    </div>
+
+    <div class="section-label">Métricas financieras</div>
+    <div class="cards-4" style="margin-bottom:20px">
+      <div class="scard hlg"><div class="scard-label">Revenue</div><div class="scard-val sm">${fmtUSD(fin.revenue)}</div><div class="scard-sub">ingresado manualmente</div></div>
+      <div class="scard hl"><div class="scard-label">CPL</div><div class="scard-val sm">${cpl>0?fmtUSD(cpl):'—'}</div><div class="scard-sub">costo por lead</div></div>
+      <div class="scard hl"><div class="scard-label">CAC</div><div class="scard-val sm">${cac>0?fmtUSD(cac):'—'}</div><div class="scard-sub">costo por venta</div></div>
+      <div class="scard hla"><div class="scard-label">RPL</div><div class="scard-val sm">${rpl>0?fmtUSD(rpl):'—'}</div><div class="scard-sub">revenue por lead</div></div>
+    </div>
+
+    <div class="section-label">Tasas de conversión</div>
+    <div class="funnel-row" style="margin-bottom:20px" id="funnel-conv">
+      <div class="funnel-step"><div class="funnel-step-num">${fmt(total)}</div><div class="funnel-step-label">Leads</div></div>
+      <div class="funnel-arrow"><div class="funnel-rate" style="color:${rateColor(tcLC,.3,.15)}">${fmtPct(tcLC)}</div><div class="funnel-rate-label">→ calificados</div></div>
+      <div class="funnel-step"><div class="funnel-step-num">${fmt(calif)}</div><div class="funnel-step-label">Calificados</div></div>
+      <div class="funnel-arrow"><div class="funnel-rate" style="color:${rateColor(tcCV,.4,.2)}">${fmtPct(tcCV)}</div><div class="funnel-rate-label">→ ventas</div></div>
+      <div class="funnel-step" style="border-color:#1D9E75"><div class="funnel-step-num" style="color:#4ade80">${fmt(ventas)}</div><div class="funnel-step-label">Ventas</div></div>
+      <div class="funnel-arrow"><div class="funnel-rate" style="color:${rateColor(tcLV,.15,.08)}">${fmtPct(tcLV)}</div><div class="funnel-rate-label">leads → ventas</div></div>
+      <div class="funnel-step" style="border-color:#BA7517"><div class="funnel-step-num" style="color:#fbbf24">${roas>0?roas.toFixed(1)+'x':'—'}</div><div class="funnel-step-label">ROAS</div></div>
+    </div>
+
+    <div class="grid-2" id="grid-charts"></div>
+    <div class="grid-2" id="grid-tables"></div>
+    <div class="grid-2" id="grid-bottom"></div>
+  `;
+
+  ['inp-revenue','inp-adspend','inp-ticket'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', render);
+  });
+
+  // GRÁFICO MENSUAL
+  const meses = {};
+  data.forEach(r => {
+    if (!r.Fecha) return;
+    const parts = r.Fecha.split('/');
+    if (parts.length < 3) return;
+    const m = parts[2] + '-' + parts[1].padStart(2,'0');
+    if (!meses[m]) meses[m] = {leads:0,ventas:0};
+    meses[m].leads++;
+    if (r.Es_Venta==='1') meses[m].ventas++;
+  });
+  const ml = Object.keys(meses).sort();
+  const mnNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const mlShort = ml.map(m => { const [y,mo]=m.split('-'); return mnNames[parseInt(mo)-1]+"'"+y.slice(2); });
+
+  document.getElementById('grid-charts').innerHTML = `
+    <div class="section">
+      <div class="section-title">Leads, ventas y tasa de cierre por mes</div>
+      <div class="legend">
+        <span><span class="ldot" style="background:#AFA9EC"></span>Leads</span>
+        <span><span class="ldot" style="background:#1D9E75"></span>Ventas</span>
+        <span><span class="ldot" style="background:#EF9F27;border-radius:50%"></span>Tasa cierre</span>
+      </div>
+      <div style="position:relative;width:100%;height:210px">
+        <canvas id="chart-mes" role="img" aria-label="Leads ventas y tasa por mes">Gráfico mensual.</canvas>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Tasa de cierre por canal</div>
+      <table id="tbl-canal">
+        <thead><tr><th>Canal</th><th style="text-align:right">Leads</th><th style="text-align:right">Calif.</th><th style="text-align:right">Ventas</th><th style="text-align:right">Tasa</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  `;
+
+  if (chartMes) chartMes.destroy();
+  chartMes = new Chart(document.getElementById('chart-mes'), {
+    type:'bar',
+    data:{
+      labels: mlShort,
+      datasets:[
+        {label:'Leads', data:ml.map(m=>meses[m].leads),  backgroundColor:'#AFA9EC', borderRadius:3, yAxisID:'y'},
+        {label:'Ventas',data:ml.map(m=>meses[m].ventas), backgroundColor:'#1D9E75', borderRadius:3, yAxisID:'y'},
+        {label:'Tasa %',data:ml.map(m=>meses[m].leads>0?Math.round(meses[m].ventas/meses[m].leads*100):0),
+          type:'line', borderColor:'#EF9F27', backgroundColor:'rgba(239,159,39,0.1)', pointBackgroundColor:'#EF9F27',
+          pointRadius:3, tension:0.3, yAxisID:'y2', fill:true}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label==='Tasa %'?' Tasa: '+ctx.parsed.y+'%':' '+ctx.dataset.label+': '+ctx.parsed.y}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#4a4a6a',font:{size:9},autoSkip:false,maxRotation:45}},
+        y:{position:'left',grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#4a4a6a',font:{size:9}}},
+        y2:{position:'right',grid:{display:false},ticks:{color:'#BA7517',font:{size:9},callback:v=>v+'%'},min:0,max:100}
+      }
+    }
+  });
+
+  // TABLA CANAL
+  const canales = {};
+  data.forEach(r=>{
+    const c=r.Canal||'Sin canal';
+    if(!canales[c]) canales[c]={leads:0,calif:0,ventas:0};
+    canales[c].leads++;
+    if(r.Es_Calificado==='1') canales[c].calif++;
+    if(r.Es_Venta==='1') canales[c].ventas++;
+  });
+  document.querySelector('#tbl-canal tbody').innerHTML = Object.entries(canales)
+    .sort((a,b)=>b[1].leads-a[1].leads)
+    .map(([c,v])=>{
+      const t=v.leads>0?v.ventas/v.leads:0;
+      return `<tr><td>${c}</td><td style="text-align:right">${v.leads}</td><td style="text-align:right">${v.calif}</td><td style="text-align:right">${v.ventas}</td><td style="text-align:right"><span class="badge ${badgeC(t)}">${fmtPct(t)}</span></td></tr>`;
+    }).join('');
+
+  // TABLAS REGIÓN Y VENDEDOR
+  const regs={}, vends={};
+  data.forEach(r=>{
+    const reg=r.Estado_Lead||'Sin estado';
+    if(!regs[reg]) regs[reg]={leads:0,ventas:0};
+    regs[reg].leads++;
+    if(r.Es_Venta==='1') regs[reg].ventas++;
+
+    const v=r.Vendedor||'Sin asignar';
+    if(!vends[v]) vends[v]={leads:0,ventas:0};
+    vends[v].leads++;
+    if(r.Es_Venta==='1') vends[v].ventas++;
+  });
+
+  const maxV=Math.max(...Object.values(vends).map(v=>v.ventas),1);
+
+  document.getElementById('grid-tables').innerHTML = `
+    <div class="section">
+      <div class="section-title">Tasa de cierre por estado</div>
+      <table id="tbl-region">
+        <thead><tr><th>Estado</th><th style="text-align:right">Leads</th><th>Dist.</th><th style="text-align:right">Ventas</th><th style="text-align:right">Tasa</th></tr></thead>
+        <tbody>${Object.entries(regs).sort((a,b)=>b[1].leads-a[1].leads).slice(0,10).map(([reg,v])=>{
+          const t=v.leads>0?v.ventas/v.leads:0;
+          const pct=total>0?Math.round(v.leads/total*100):0;
+          return `<tr><td>${reg}</td><td style="text-align:right">${v.leads}</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:#7F77DD"></div></div><span style="font-size:9px;color:#4a4a6a;min-width:20px">${pct}%</span></div></td><td style="text-align:right">${v.ventas}</td><td style="text-align:right"><span class="badge ${badgeC(t)}">${fmtPct(t)}</span></td></tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-title">Tasa de cierre por vendedor</div>
+      <table>
+        <thead><tr><th>Vendedor</th><th style="text-align:right">Leads</th><th style="text-align:right">Ventas</th><th>Progreso</th><th style="text-align:right">Tasa</th></tr></thead>
+        <tbody>${Object.entries(vends).sort((a,b)=>b[1].ventas-a[1].ventas).map(([v,d])=>{
+          const t=d.leads>0?d.ventas/d.leads:0;
+          const pct=Math.round(d.ventas/maxV*100);
+          return `<tr><td>${v}</td><td style="text-align:right">${d.leads}</td><td style="text-align:right">${d.ventas}</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:#534AB7"></div></div></div></td><td style="text-align:right"><span class="badge ${badgeC(t)}">${fmtPct(t)}</span></td></tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  `;
+
+  // FUNNEL PIPELINE + MOTIVOS PÉRDIDA
+  const etapas={}, motivos={};
+  data.forEach(r=>{
+    if(!etapas[r.Etapa]) etapas[r.Etapa]=0;
+    etapas[r.Etapa]++;
+    if(r.Es_Perdido==='1' && r.Motivo_Perdida) {
+      if(!motivos[r.Motivo_Perdida]) motivos[r.Motivo_Perdida]=0;
+      motivos[r.Motivo_Perdida]++;
+    }
+  });
+  const maxE=Math.max(...Object.values(etapas),1);
+  const totalMot=Object.values(motivos).reduce((a,b)=>a+b,0);
+
+  const pipelineHTML = Object.entries(etapas).sort((a,b)=>b[1]-a[1]).map(([e,n])=>{
+    const pct=Math.round(n/maxE*100);
+    const isV=e.toLowerCase()==='close - won';
+    const isC=e.toLowerCase().includes('calificado');
+    const isP=e==='PERDIDO';
+    const color=isV?'#1D9E75':isC?'#7F77DD':isP?'#993C1D':'#2d2d4e';
+    const tc=isV?'#4ade80':isC?'#c4b5fd':isP?'#f87171':'#6b6b8a';
+    return `<div class="pip-item"><div class="pip-label"><span style="color:${tc};font-weight:${isV||isC?600:400}">${e}</span><span style="color:#4a4a6a">${n}</span></div><div class="pip-bar-bg"><div class="pip-bar-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
+  }).join('');
+
+  const motivosHTML = totalMot===0
+    ? '<div class="empty-msg">Sin datos de motivos de pérdida cargados en Kommo</div>'
+    : Object.entries(motivos).sort((a,b)=>b[1]-a[1]).map(([m,n])=>{
+        const pct=Math.round(n/totalMot*100);
+        return `<div class="pip-item"><div class="pip-label"><span style="color:#c8c6d8">${m}</span><span style="color:#4a4a6a">${n} (${pct}%)</span></div><div class="pip-bar-bg"><div class="pip-bar-fill" style="width:${pct}%;background:#993C1D"></div></div></div>`;
+      }).join('');
+
+  document.getElementById('grid-bottom').innerHTML = `
+    <div class="section"><div class="section-title">Distribución por etapa del pipeline</div>${pipelineHTML}</div>
+    <div class="section"><div class="section-title">Motivos de pérdida</div>${motivosHTML}</div>
+  `;
+}
+
+['sel-period','sel-canal','sel-vendedor'].forEach(id=>document.getElementById(id).addEventListener('change',render));
+</script>
+</body>
+</html>
