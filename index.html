@@ -239,8 +239,8 @@ function getFiltered() {
 
 function getFinancial() {
   return {
-    revenue: parseFloat(document.getElementById('inp-revenue').value)||0,
-    adspend: parseFloat(document.getElementById('inp-adspend').value)||0,
+    revenue: parseFloat((document.getElementById('inp-revenue') || {value:0}).value) || 0,
+    adspend: parseFloat((document.getElementById('inp-adspend') || {value:0}).value) || 0,
   };
 }
 
