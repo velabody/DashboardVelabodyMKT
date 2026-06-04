@@ -111,14 +111,10 @@ tr:hover td { background: #1e1e30; }
 
 <div class="config-bar">
   <div class="config-inner">
-    <label>ID de tu Google Sheet:</label>
-    <input type="text" id="sheet-url" placeholder="Pegá acá solo el ID de tu sheet (la parte larga entre /d/ y /pub)">
-    <button onclick="loadSheet()">Cargar datos</button>
+    <label>Fuente de datos: Pipeline VB USA - Ventas (Google Sheets)</label>
+    <button onclick="loadSheet()">↺ Actualizar datos</button>
   </div>
-  <div class="config-note">
-    Tu URL es: https://docs.google.com/spreadsheets/d/e/<strong>ESTE_ES_EL_ID</strong>/pub?gid=...
-    &nbsp;·&nbsp; El ID ya está precargado con el de VELABODY — solo hacé clic en "Cargar datos"
-  </div>
+  <div class="config-note">Los datos se cargan automáticamente desde tu Google Sheet pública · Se actualiza diariamente con el script de Kommo</div>
 </div>
 
 <div class="filters">
@@ -149,25 +145,20 @@ let chartMes = null;
 
 // ID precargado de VELABODY — el usuario puede cambiarlo
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('sheet-url').value = '2PACX-1vSkwRc2nROP76k1AHgfjZnbYXLToMZDOrM2R8PYYYa4PgeN8n1ol0uGmQ2Nr2H9kNVAijskqbOnKI37';
+  loadSheet();
 });
 
 function loadSheet() {
-  const sheetId = document.getElementById('sheet-url').value.trim();
-  if (!sheetId) return;
+  // ID hardcodeado directamente — no depende del campo de texto
+  const sheetId = '2PACX-1vSkwRc2nROP76k1AHgfjZnbYXLToMZDOrM2R8PYYYa4PgeN8n1ol0uGmQ2Nr2H9kNVAijskqbOnKI37';
+  const gid     = '1930317191';
 
   setStatus('loading', 'Cargando...');
   document.getElementById('loading-msg').textContent = 'Cargando datos desde Google Sheets...';
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('loading-msg').style.display = 'block';
 
-  // Usar Google Visualization Query API con JSONP — bypasea CORS
-  const gid = '1930317191';
   const callbackName = 'handleSheetData_' + Date.now();
-  const url = `https://docs.google.com/spreadsheets/d/e/${sheetId}/pub?gid=${gid}&single=true&output=csv`;
-
-  // Usar un iframe oculto + objeto XMLHttpRequest con modo no-cors no funciona
-  // La solución correcta: Google Sheets gviz API con JSONP
   const gvizUrl = `https://docs.google.com/spreadsheets/d/e/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}&callback=${callbackName}`;
 
   window[callbackName] = function(data) {
